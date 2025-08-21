@@ -1,0 +1,191 @@
+/* =========
+   Tema base
+   ========= */
+:root {
+  --bg: #121212;
+  --panel: #1e1e1e;
+  --cell: #2a2a2a;
+  --text: #eaeaea;
+  --muted: #b9b9b9;
+  --accent: #ffcc00;
+  --accent-ink: #1b1500;
+  --radius: 12px;
+  --gap: 10px;
+}
+
+/* Reset suave */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;          /* Flexbox: layout general */
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* =========
+   Encabezado
+   ========= */
+.app-header {
+  width: 100%;
+  max-width: 520px;
+  display: flex;                   /* Flexbox */
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+}
+
+.controls {
+  display: flex;                   /* Flexbox */
+  gap: 8px;
+}
+
+#btn-reiniciar {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+#btn-reiniciar:hover { filter: brightness(1.05); }
+#btn-reiniciar:active { animation: press 180ms ease; }
+
+/* Animacion por interaccion del usuario (requisito) */
+@keyframes press {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(1px) scale(0.98); }
+  100% { transform: translateY(0); }
+}
+
+/* =====
+   HUD
+   ===== */
+.hud {
+  width: 100%;
+  max-width: 520px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  display: flex;                   /* Flexbox */
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px;
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+}
+.label { color: var(--muted); }
+
+/* ==========
+   Contenedor tablero
+   ========== */
+.board-wrap {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* Tablero 4x4 con CSS Grid */
+.board {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: var(--gap);
+  display: grid;                                  /* Grid: para el 4x4 */
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+}
+
+/* Celdas (16 fijas) */
+.cell {
+  background: var(--cell);
+  border-radius: 10px;
+  height: clamp(70px, 9.5vw, 100px);              /* responsivo */
+  display: flex;                                   /* Flexbox: centrar numero */
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  user-select: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.cell:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+
+/* Variantes de color por valor (se aplicaran con clases JS mas adelante) */
+.tile-2    { background: #3a3a3a; color: #f0f0f0; }
+.tile-4    { background: #464646; color: #f0f0f0; }
+.tile-8    { background: #705000; color: #fff7d6; }
+.tile-16   { background: #8a6100; color: #fff7d6; }
+.tile-32   { background: #a77300; color: #fff5c0; }
+.tile-64   { background: #c88500; color: #fff2ac; }
+.tile-128  { background: #e69700; color: #1b1500; }
+.tile-256  { background: #f0a600; color: #1b1500; }
+.tile-512  { background: #ffb700; color: #1b1500; }
+.tile-1024 { background: #ffc933; color: #1b1500; }
+.tile-2048 { background: #ffdc66; color: #1b1500; }
+
+/* Animaciones utiles para cuando aparezcan o se combinen (las activara JS) */
+@keyframes pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes merge {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.appear { animation: pop 160ms ease-out; }
+.bump   { animation: merge 160ms ease-in-out; }
+
+/* =========
+   Overlay (resumen ampliado / ganaste / game over)
+   ========= */
+.overlay[hidden] { display: none; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+  display: flex;                                   /* Flexbox */
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.overlay-card {
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 16px;
+  width: min(520px, 92vw);
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+#overlay-close {
+  margin-top: 8px;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+#overlay-close:active { animation: press 180ms ease; }

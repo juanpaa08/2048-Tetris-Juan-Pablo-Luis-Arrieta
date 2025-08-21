@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>2048 Tetris</title>
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+  <noscript>Este juego requiere JavaScript habilitado.</noscript>
+
+  <!-- Encabezado: título + botón de reinicio -->
+  <header class="app-header">
+    <h1>2048 Tetris</h1>
+    <div class="controls">
+      <button id="btn-reiniciar" type="button" aria-label="Reiniciar la partida">Reiniciar</button>
+    </div>
+  </header>
+
+  <!-- Resumen (HUD) siempre visible: suma, movimientos, tiempo -->
+  <section id="resumen" class="hud" aria-live="polite">
+    <div class="stat">
+      <span class="label">Suma total:</span>
+      <span id="stat-suma">0</span>
+    </div>
+    <div class="stat">
+      <span class="label">Movimientos:</span>
+      <span id="stat-mov">0</span>
+    </div>
+    <div class="stat">
+      <span class="label">Tiempo:</span>
+      <span id="stat-tiempo">00:00</span>
+    </div>
+  </section>
+
+  <!-- Tablero 4×4 (16 celdas fijas). Se renderiza desde la matriz en JS -->
+  <main class="board-wrap">
+    <div id="board" class="board" role="grid" aria-label="Tablero 4 por 4">
+      <!-- Fila 0 -->
+      <div class="cell" role="gridcell" data-row="0" data-col="0"></div>
+      <div class="cell" role="gridcell" data-row="0" data-col="1"></div>
+      <div class="cell" role="gridcell" data-row="0" data-col="2"></div>
+      <div class="cell" role="gridcell" data-row="0" data-col="3"></div>
+      <!-- Fila 1 -->
+      <div class="cell" role="gridcell" data-row="1" data-col="0"></div>
+      <div class="cell" role="gridcell" data-row="1" data-col="1"></div>
+      <div class="cell" role="gridcell" data-row="1" data-col="2"></div>
+      <div class="cell" role="gridcell" data-row="1" data-col="3"></div>
+      <!-- Fila 2 -->
+      <div class="cell" role="gridcell" data-row="2" data-col="0"></div>
+      <div class="cell" role="gridcell" data-row="2" data-col="1"></div>
+      <div class="cell" role="gridcell" data-row="2" data-col="2"></div>
+      <div class="cell" role="gridcell" data-row="2" data-col="3"></div>
+      <!-- Fila 3 -->
+      <div class="cell" role="gridcell" data-row="3" data-col="0"></div>
+      <div class="cell" role="gridcell" data-row="3" data-col="1"></div>
+      <div class="cell" role="gridcell" data-row="3" data-col="2"></div>
+      <div class="cell" role="gridcell" data-row="3" data-col="3"></div>
+    </div>
+  </main>
+
+  <!-- Overlay opcional para mostrar el resumen ampliado en cualquier momento -->
+  <section id="overlay" class="overlay" hidden aria-hidden="true">
+    <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+      <h2 id="overlay-title">Resumen de la partida</h2>
+      <p>Suma total: <span id="resume-suma">0</span></p>
+      <p>Movimientos: <span id="resume-mov">0</span></p>
+      <p>Tiempo: <span id="resume-tiempo">00:00</span></p>
+      <button id="overlay-close" type="button">Cerrar</button>
+    </div>
+  </section>
+
+  <!-- Gancho al JS (carpeta src) -->
+  <script src="./src/main.js" defer></script>
+</body>
+</html>
+
