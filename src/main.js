@@ -8,8 +8,11 @@ let contarMovimientos = 0;  // Variable para llevar una cuenta de los movimiento
 let dropCounter = 0 
 let ultimoTiempo = 0 // Variable para ir llevando una cuenta del tiempo
 let ultimaFusion = null; // { fila, columna } o null
-
-
+let segundos = 0 // variable para los segundos del tiempo
+let minutos = 0  // Variable para llevar una cuenta de los minutos del tiempo
+let horas = 0  // Variables para llevar una cuenta de las horas del tiempo
+let tiempoConFormato = (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos) + ':' + (segundos < 10 ? '0' + segundos : segundos);  // Formato que va a tener el tiempo mostrado
+let perder = false // Variable para saber si se perdió el juego o no
 
 // Definir fichas activas
 
@@ -21,7 +24,7 @@ let fichaActiva = {
 
 // --------- Funciones -----------
 
-
+// Funcion para actualizar la vista del html dependiendo de todo lo que pasa en el juego
 function actualizarVista() {
   const celdas = document.querySelectorAll('.cell');
 
@@ -47,7 +50,7 @@ function actualizarVista() {
     }
   }
 
-  // Dibuja ficha activa con borde
+  // Dibuja la ficha activa con borde naranja
   if (fichaActiva && fichaActiva.fila >= 0 && fichaActiva.fila < filas &&
       fichaActiva.columna >= 0 && fichaActiva.columna < columnas) {
     const index = fichaActiva.fila * columnas + fichaActiva.columna;
@@ -91,7 +94,43 @@ function actualizarContarMovimientos() {
     document.getElementById('resume-mov').textContent = contarMovimientos;
 }
 
-function crearFichaNueva() { // // Crea una nueva ficha en la fila superior (o reinicia el juego si no hay espacio disponible)
+// Funcion para actualizar el tiempo de forma progresiva
+function actualizarTiempo() {
+
+  if (perder == false) {
+    segundos++; // Aumenta el valor de los segundos progresivamente
+
+    if (segundos == 60) {  // Condicional para ver si los segundos ya llegaran a 60 y así sumar 1 a minutos
+      segundos = 0;
+      minutos += 1;
+    }
+    if (minutos == 60) {  // Condicional para ver si los minutos ya llegaron a 60 y poder sumarle 1 a la variable de horas
+      minutos = 0;
+      horas += 1; 
+      tiempoConFormato = horas + ":" + minutos + ":" + segundos;
+    }
+
+    // Condicionales para ir cambiando la forma en que se ve la variable de tiempoConFormato
+    if (minutos == 0 && horas == 0 ) {
+      tiempoConFormato = (segundos < 10 ? '0' + segundos : segundos);
+    }
+    if (minutos >= 1 ) {
+      tiempoConFormato = (minutos < 10 ? '0' + minutos : minutos) + ':' + (segundos < 10 ? '0' + segundos : segundos);
+    }
+    if (horas >= 1 ) {
+      tiempoConFormato = (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos) + ':' + (segundos < 10 ? '0' + segundos : segundos);
+    }
+
+    // Cambios en el html referentes al tiempo 
+    document.getElementById('stat-tiempo').textContent = tiempoConFormato;
+    document.getElementById('resume-tiempo').textContent = tiempoConFormato;
+    setTimeout("actualizarTiempo()",1000);  // Forma recursiva para llamar nuevamente a esta función luego de 1000 minisegundos
+
+  }
+}
+
+// Funcion para crear una nueva ficha en la fila superior (o reiniciar el juego si no hay espacios disponibles)
+function crearFichaNueva() { 
   // Determina columnas disponibles en la fila 0
   const columnasDisponibles = [];
   for (let j = 0; j < columnas; j++) {
@@ -100,13 +139,22 @@ function crearFichaNueva() { // // Crea una nueva ficha en la fila superior (o r
 
   // Si no hay espacio, fin del juego
   if (columnasDisponibles.length === 0) {
+    perder = true
     alert("Fin del juego, has perdido");
     // limpiar tablero
     for (let i = 0; i < filas; i++) {
       for (let j = 0; j < columnas; j++) tablero[i][j] = 0;
     }
+    
     contarMovimientos = 0;
     actualizarContarMovimientos();
+
+    // Se restablecen los valores iniciales de las variables asociadas a tiempo y se llama a la función
+    segundos = 0;
+    minutos = 0;
+    horas = 0;
+    actualizarTiempo();
+    perder = false
 
     // ficha inicial
     fichaActiva = {
@@ -118,7 +166,7 @@ function crearFichaNueva() { // // Crea una nueva ficha en la fila superior (o r
     return;
   }
 
-  // Elige valor y columna al azar
+  // Se elige el valor y columna al azar
   const valor = opcionesFicha[Math.floor(Math.random() * opcionesFicha.length)];
   const columnaAleatoria = columnasDisponibles[Math.floor(Math.random() * columnasDisponibles.length)];
 
@@ -164,22 +212,62 @@ function verColision () {
 }
 
 
+// Funcion para aplicarle gravedad a fichas que quedan en el aire, luego de que se fusionen otras fichas
+function aplicarGravedadFichas() {
+  let algoCae = true;
 
-// Pega la ficha activa al tablero y prepara la siguiente (manejo de game over ocurre en crearFichaNueva)
+  // While que se da si el valor de que algoCae es igual a true
+  while (algoCae) {
+    algoCae = false;
+
+    for (let i = filas - 2; i >= 0; i--) {
+      for (let j = 0; j < columnas; j++) {
+        if (fichaActiva && i == fichaActiva.fila && j == fichaActiva.columna) { // Se evita esto si es la ficha activa o si hay espacio vacio
+          continue;
+        }
+        if (tablero[i][j] === 0) {
+          continue;
+        }
+        if (tablero [i + 1][j] === 0) {  // Condicional para ver si la celda de abajo esta vacia
+          if (!(fichaActiva && fichaActiva.fila === i + 1 && fichaActiva.columna === j)) {  // Condicional para ver si la ficha activa no está en la posición de abajo
+            // Se mueve la ficha hacia abajo
+            tablero[i + 1][j] = tablero[i][j];
+            tablero[i][j] = 0;
+            algoCae = true;
+          }
+        }
+        else if (tablero[i + 1][j] === tablero[i][j]) {  // Se verifica si se puede hacer alguna fusion después de caer
+          tablero[i + 1][j] = tablero[i][j] * 2;
+          tablero[i][j] = 0;
+          algoCae = true;
+          ultimaFusion = { fila: i + 1, columna: j};
+        }
+      }   
+    } 
+  }
+  actualizarVista();
+}
+  
+
+
+// Función para solidificar la ficha activa al tablero y preparar la siguiente (el manejo del game over ocurre en crearFichaNueva)
 function solidificarFicha() {
-  // 1) Pegar la ficha activa en la posición actual
+  // Se solidifica la ficha activa en la posición actual
   tablero[fichaActiva.fila][fichaActiva.columna] = fichaActiva.valor;
 
-  // 2) Crear la siguiente ficha (si no hay espacio, crearFichaNueva reinicia el juego)
+  // Se Crea la siguiente ficha (si no hay espacio, crearFichaNueva reinicia el juego)
   crearFichaNueva();
 
-  // 3) Actualizar la vista para reflejar cambios
+  // Se aplica gravedad despues de solidicar
+  aplicarGravedadFichas();
+
+  // Actualiza la vista para reflejar cambios
   actualizarVista();
 }
 
 
 
-// Funcion para que la ficha vaya cayendo de forma automatica
+// Función para que la ficha vaya cayendo de forma automatica
 function fichaCae (time = 0) {
     const tiempo = time - ultimoTiempo
     ultimoTiempo = time
@@ -195,11 +283,9 @@ function fichaCae (time = 0) {
 
 }
 
+// Funcion para que la ficha baje un paso, en caso de que se puedan fusionar
 function bajarUnPaso() {
-  // intenta cadena vertical en el mismo frame
-  let hizoAlgo = false;
-
-  while (true) {
+ 
     const fActual = fichaActiva.fila;
     const nf = fActual + 1;
     const nc = fichaActiva.columna;
@@ -213,48 +299,33 @@ function bajarUnPaso() {
     const destino = tablero[nf][nc];
 
     if (destino === 0) {
-      // baja 1 celda (solo una vez por llamada si prefieres; aqui permitimos varias)
+      // baja 1 celda (solo una vez por llamada; aqui se permiten varias)
       fichaActiva.fila = nf;
-      hizoAlgo = true;
-      // si quieres solo 1 paso por pulsacion, quita el while y deja un return aqui
-      return;
+      contarMovimientos++;
     }
 
-    if (destino === fichaActiva.valor) {
+    else if (destino === fichaActiva.valor) {
+      // Se fusiona pero la ficha sigue activa
       const nuevo = destino * 2;
-
-      // 👇 limpia la celda actual porque el bloque se mueve abajo
-      if (tablero[fActual] && tablero[fActual][nc] !== undefined) {
-        // normalmente sera 0 porque la activa no estaba en tablero,
-        // pero si ya venia de una fusion previa en cadena vertical, puede tener valor.
-        tablero[fActual][nc] = 0;
-      }
-
-      tablero[nf][nc] = nuevo;     // pone el fusionado abajo
+      tablero[nf][nc] = 0;     // pone el fusionado abajo
       fichaActiva.fila = nf;
       fichaActiva.valor = nuevo;
       ultimaFusion = { fila: nf, columna: nc };
-      hizoAlgo = true;
-
-      // continua el while para intentar otra fusion en cadena
-      continue;
+      contarMovimientos++;
+      aplicarGravedadFichas();
     }
-
-    // distinta -> se pega encima y termina
+    else { 
+    // distinta -> se solidifica encima y termina
     solidificarFicha();
-    return;
-  }
-
-  if (hizoAlgo) contarMovimientos++;
+    }
 }
 
 
-
+// Funcion para ver si hay fusion de dos fichas de manera horizontal
 function moverHorizontal(dir) { // dir: -1 izq, +1 der
   const r = fichaActiva.fila;
-  let moved = false;
-
-  // 1) un solo paso si hay hueco inmediato
+  
+  // Un solo paso si hay hueco inmediato
   const c1 = fichaActiva.columna + dir;
   if (c1 < 0 || c1 >= columnas) return;
 
@@ -262,47 +333,24 @@ function moverHorizontal(dir) { // dir: -1 izq, +1 der
 
   if (vecino === 0) {
     fichaActiva.columna = c1;
-    moved = true;
-  } else if (vecino === fichaActiva.valor) {
-    // primera fusion: el resultado vive en c1
+    contarMovimientos++;
+    aplicarGravedadFichas();
+  } 
+  else if (vecino === fichaActiva.valor) {
+    // primera fusion: el resultado vive en c1 pero la ficha sigue activa
     const nuevo = vecino * 2;
-    tablero[r][c1] = nuevo;        // c1 ahora contiene el fusionado
+    tablero[r][c1] = 0;        // c1 ahora contiene el fusionado
     fichaActiva.columna = c1;      // la activa "se vuelve" ese bloque
     fichaActiva.valor = nuevo;
     ultimaFusion = { fila: r, columna: c1 };
-    moved = true;
-
-    // 2) cadena: mientras el siguiente inmediato sea igual, fusiona otra vez
-    while (true) {
-      const cActual = fichaActiva.columna;   // donde esta AHORA el bloque fusionado
-      const c2 = cActual + dir;              // siguiente vecino en la misma direccion
-      if (c2 < 0 || c2 >= columnas) break;
-
-      const vecino2 = tablero[r][c2];
-      if (vecino2 === fichaActiva.valor) {
-        const nuevo2 = vecino2 * 2;
-
-        // 👇 LIMPIA la celda actual (cActual) porque el bloque se "mueve" a c2
-        tablero[r][cActual] = 0;
-
-        // el bloque pasa a c2 con el valor duplicado
-        tablero[r][c2] = nuevo2;
-        fichaActiva.columna = c2;
-        fichaActiva.valor = nuevo2;
-        ultimaFusion = { fila: r, columna: c2 };
-
-        // sigue intentando encadenar
-      } else {
-        break; // distinto o vacio (no resbalamos por vacios)
-      }
-    }
+    contarMovimientos++;
+    aplicarGravedadFichas();
   }
 
-  if (moved) contarMovimientos++;
 }
 
-// Devuelve la suma de todas las fichas del tablero.
-// Si incluirActiva = true, agrega el valor de la ficha activa SOLO si aún no está pegada.
+// Función para devolver la suma de todas las fichas del tablero.
+// Si incluirActiva = true, agrega el valor de la ficha activa solo si aún no está pegada.
 function obtenerSumaTotal(incluirActiva = true) {
   let suma = 0;
 
@@ -328,8 +376,10 @@ function obtenerSumaTotal(incluirActiva = true) {
   return suma;
 }
 
+
+// Funcion para actualizar la variable de suma que se ve en el juego
 function actualizarSumaTotal() {
-  const suma = obtenerSumaTotal(true); // true -> incluye ficha activa si no está pegada
+  const suma = obtenerSumaTotal(true); // true -> incluye ficha activa si no está solidificada
   const hud = document.getElementById('stat-suma');
   if (hud) hud.textContent = suma;
 
@@ -338,4 +388,36 @@ function actualizarSumaTotal() {
 }
 
 
+
+// Funcion para reiniciar la partida
+function reiniciarPartida() {
+  perder = true
+  for (let i = 0; i < filas; i++) {
+      for (let j = 0; j < columnas; j++) tablero[i][j] = 0;
+    }
+  contarMovimientos = 0;
+  actualizarContarMovimientos();
+
+  // Se restablecen los valores iniciales de las variables asociadas a tiempo y se llama a la función
+  segundos = 0;
+  minutos = 0;
+  horas = 0;
+  actualizarTiempo();
+  perder = false
+
+  // ficha inicial
+  fichaActiva = {
+    valor: 2,
+    fila: 0,
+    columna: Math.floor(Math.random() * columnas)
+  };
+  actualizarVista();
+  return;
+}
+
+ 
+window.onload = function() { document.getElementById('btn-reiniciar').addEventListener('click', reiniciarPartida) }; // Evento que permite reiniciar la partida al hacer click sobre el boton de reiniciar
+
 fichaCae()  // Se llama a esta funcion para que la fichaActiva siempre vaya cayendo de forma automatica
+actualizarTiempo()  // Se llama a esta funcion para que el tiempo vaya aumentando progresivamente
+
