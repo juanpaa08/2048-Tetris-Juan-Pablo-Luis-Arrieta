@@ -124,10 +124,11 @@ function actualizarTiempo() {
     // Cambios en el html referentes al tiempo 
     document.getElementById('stat-tiempo').textContent = tiempoConFormato;
     document.getElementById('resume-tiempo').textContent = tiempoConFormato;
-    setTimeout("actualizarTiempo()",1000);  // Forma recursiva para llamar nuevamente a esta función luego de 1000 minisegundos
-
   }
 }
+
+setInterval(actualizarTiempo,1000);  // Forma de ir aumentando el tiempo progresivamente
+
 
 // Funcion para crear una nueva ficha en la fila superior (o reiniciar el juego si no hay espacios disponibles)
 function crearFichaNueva() { 
@@ -184,6 +185,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown')  bajarUnPaso();
   actualizarContarMovimientos();
   actualizarVista();
+
+  ganarPartida(); // Se llama a esta función para ver si después de cada movimiento se logra la victoria del juego
 });
 
 
@@ -269,18 +272,23 @@ function solidificarFicha() {
 
 // Función para que la ficha vaya cayendo de forma automatica
 function fichaCae (time = 0) {
-    const tiempo = time - ultimoTiempo
-    ultimoTiempo = time
-    dropCounter = dropCounter + tiempo
+    
+      const tiempo = time - ultimoTiempo
+      ultimoTiempo = time
+      dropCounter = dropCounter + tiempo
 
-    if (dropCounter > 1000) {  // Esto es cuando pasa un segundo
-        bajarUnPaso();
-        dropCounter = 0  // Se reinica el contador de esta variable
-    }
+      if (perder == false) {
+        if (dropCounter > 1000) {  // Esto es cuando pasa un segundo
+          bajarUnPaso();
+          dropCounter = 0  // Se reinica el contador de esta variable
+      }
+      actualizarVista();
+      }
+      
 
-    actualizarVista();
-    window.requestAnimationFrame(fichaCae)
-
+      window.requestAnimationFrame(fichaCae)
+   
+    
 }
 
 // Funcion para que la ficha baje un paso, en caso de que se puedan fusionar
@@ -415,8 +423,65 @@ function reiniciarPartida() {
   return;
 }
 
+
+// Función para mostrar un resumen de victoria
+
+function mostrarResumenDeVictoria() {
+  // Se obtienen los elementos del overlay
+  const overlay = document.getElementById('overlay');
+  const overlayTitulo = document.getElementById('overlay-title');
+  const overlaySuma = document.getElementById('resume-suma');
+  const overlayMovimientos = document.getElementById('resume-mov');
+  const overlayTiempo = document.getElementById('resume-tiempo');
+
+  // Se actualizan los valores del overlay
+  overlaySuma.textContent = obtenerSumaTotal(true);
+  overlayMovimientos.textContent = contarMovimientos;
+  overlayTiempo.textContent = tiempoConFormato;
+
+
+  perder = true; // Se cambia el valor valor de esta variable a true para que el juego se pueda pausar
+  overlayTitulo.textContent = 'Felicidades, una ficha ya tiene el valor de 2048, has ganado!'
+  overlay.hidden = false; // Con esto se muestra el overlay
+  
+  
+}
+
+
+
+// Función para detectar si se ganó la partida
+function ganarPartida() {
+  // Se verifica si alguna ficha en el tablero tiene el valor de 2048
+  for (let i = 0; i < filas; i++) {
+    for (let j = 0; j < columnas; j++) {
+      if (tablero[i][j] === 2048) {
+        mostrarResumenDeVictoria();
+        return true;
+      }
+    }
+  }
+  // Verifica si la ficha activa tiene el valor de 2048
+  if (fichaActiva.valor === 2048) {
+    mostrarResumenDeVictoria();
+    return true;
+  }
+  
+  return false;
+}
  
-window.onload = function() { document.getElementById('btn-reiniciar').addEventListener('click', reiniciarPartida) }; // Evento que permite reiniciar la partida al hacer click sobre el boton de reiniciar
+
+// Funcion para poder cerrar el overlay y reiniciar la partida para volver a jugar
+function cerrarElOverlay() {
+  const overlay = document.getElementById('overlay');
+  overlay.hidden = true;
+  reiniciarPartida();
+
+}
+
+window.onload = function() { 
+  document.getElementById('btn-reiniciar').addEventListener('click', reiniciarPartida) // Evento que permite reiniciar la partida al hacer click sobre el boton de reiniciar
+  document.getElementById('overlay-close').addEventListener('click', cerrarElOverlay)
+}; 
 
 fichaCae()  // Se llama a esta funcion para que la fichaActiva siempre vaya cayendo de forma automatica
 actualizarTiempo()  // Se llama a esta funcion para que el tiempo vaya aumentando progresivamente
